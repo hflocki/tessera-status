@@ -1,5 +1,6 @@
 #include "status_tile.h"
 #include <algorithm>
+#include <cmath>
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
@@ -11,6 +12,27 @@ namespace esphome::status_tile {
 using tessera::Font;
 using tessera::Tone;
 namespace ui = tessera::ui;
+
+// ---- Readable colours ---------------------------------------------------------------------------------------------
+
+// A colour's luminance and the WCAG contrast of two: amber or yellow words on the light look's white card fall under
+// what a person reads, so there they take the ink instead; on the dark look they keep their colour.
+static float luminance(lv_color_t c) {
+  auto channel = [](uint8_t v) {
+    const float s = v / 255.0f;
+    return s <= 0.03928f ? s / 12.92f : std::pow((s + 0.055f) / 1.055f, 2.4f);
+  };
+  return 0.2126f * channel(c.red) + 0.7152f * channel(c.green) + 0.0722f * channel(c.blue);
+}
+static bool reads_on_card(lv_color_t c) {
+  const float a = luminance(c), b = luminance(ui::color(theme::CARD));
+  return (std::max(a, b) + 0.05f) / (std::min(a, b) + 0.05f) >= 3.0f;
+}
+// A label (words or an icon) in a tone's or a role's colour where that reads on the card, else in the ink.
+static void set_readable(lv_obj_t *label, tessera::Tone tone, theme::Role role) {
+  if (reads_on_card(ui::tone_color(tone, role))) ui::set_tone(label, tone, role);
+  else ui::set_color(label, theme::INK);
+}
 
 // ---- Kinds and colours --------------------------------------------------------------------------------------------
 
@@ -91,7 +113,7 @@ static void paint(lv_obj_t *obj, Color c, bool fill) {
     default: role = fill ? theme::TRACK : theme::MUTED; break;
   }
   if (fill) ui::set_fill(obj, tone, role);
-  else ui::set_tone(obj, tone, role);
+  else set_readable(obj, tone, role);
 }
 
 // The states that count as "on": open, on, unlocked, home, wet, running and the like. Everything else is off, or a
@@ -123,6 +145,14 @@ static void place(lv_obj_t *obj, int x, int y, int w, int h) {
 // Opacities written only when they differ: a write redraws the object.
 static void set_bg_opa(lv_obj_t *obj, lv_opa_t opa) {
   if (lv_obj_get_style_bg_opa(obj, LV_PART_MAIN) != opa) lv_obj_set_style_bg_opa(obj, opa, 0);
+}
+
+// A label inside a circle: a child of it, so the two are one part, centred in it.
+static void inside(lv_obj_t *circle, lv_obj_t *label, int w, int h, int dy = 0) {
+  lv_obj_set_style_pad_all(circle, 0, 0);
+  lv_obj_remove_flag(circle, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_set_size(label, std::max(1, w), std::max(1, h));
+  lv_obj_align(label, LV_ALIGN_CENTER, 0, dy);
 }
 
 // ---- The tile -----------------------------------------------------------------------------------------------------
@@ -176,7 +206,7 @@ class StatusTile : public tessera::Tile {
 
     circle_ = ui::block(c.parent, theme::TRACK);
     lv_obj_set_style_radius(circle_, LV_RADIUS_CIRCLE, 0);
-    icon_ = ui::label(c.parent, icon_font, theme::MUTED);
+    icon_ = ui::label(circle_, icon_font, theme::MUTED);
     lv_obj_set_style_text_align(icon_, LV_TEXT_ALIGN_CENTER, 0);
     name_ = ui::label(c.parent, Font::BODY, theme::MUTED);
     state_ = ui::label(c.parent, state_font_, theme::INK);
@@ -184,7 +214,7 @@ class StatusTile : public tessera::Tile {
     if (wide_) {
       const int cy = height_ / 2;
       place(circle_, 0, cy - dia_ / 2, dia_, dia_);
-      place(icon_, 0, cy - ih / 2, dia_, ih);
+      inside(circle_, icon_, dia_, ih);
       const int x = dia_ + ui::px(12), w = width_ - x, top = cy - text_h / 2;
       place(name_, x, top, w, name_h);
       place(state_, x, top + (show_name_ ? name_h : 0), w, state_h);
@@ -192,7 +222,7 @@ class StatusTile : public tessera::Tile {
       const int gap = ui::px(6);
       const int top = std::max(0, (height_ - dia_ - gap - text_h) / 2);
       place(circle_, (width_ - dia_) / 2, top, dia_, dia_);
-      place(icon_, (width_ - dia_) / 2, top + (dia_ - ih) / 2, dia_, ih);
+      inside(circle_, icon_, dia_, ih);
       lv_obj_set_style_text_align(name_, LV_TEXT_ALIGN_CENTER, 0);
       lv_obj_set_style_text_align(state_, LV_TEXT_ALIGN_CENTER, 0);
       place(name_, 0, top + dia_ + gap, width_, name_h);
@@ -234,7 +264,7 @@ class StatusTile : public tessera::Tile {
       // Nothing to show yet: the kind's off icon, grey, and why.
       set_bg_opa(tint_, LV_OPA_TRANSP);
       ui::set_fill(circle_, Tone::NORMAL, theme::TRACK);
-      set_bg_opa(circle_, LV_OPA_COVER);
+      set_bg_opa(circle_, LV_OPA_60);
       ui::set_text(icon_, ui::icon(k->icon_off));
       ui::set_color(icon_, theme::MUTED);
       ui::set_text(state_, plugin_->text(wrong_ ? "wrong" : have_state_ ? "unavailable" : "choose"));
@@ -255,7 +285,7 @@ class StatusTile : public tessera::Tile {
       paint(icon_, color, false);
     } else {
       ui::set_fill(circle_, Tone::NORMAL, theme::TRACK);
-      set_bg_opa(circle_, LV_OPA_COVER);
+      set_bg_opa(circle_, LV_OPA_60);
       ui::set_color(icon_, theme::MUTED);
     }
     ui::set_text(icon_, ui::icon(on ? k->icon_on : k->icon_off));

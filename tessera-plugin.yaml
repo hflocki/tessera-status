@@ -1,7 +1,7 @@
 # One Home Assistant entity on a tile, as a state: a window, a door, a light, motion, a lock, a leak. Its icon and
 # colour follow the state, both chosen on the tile. Every field is explained in docs/MANIFEST.md of tessera-plugins.
 id: status_tile
-version: 1.0.0
+version: 1.0.1
 # 0.9: Tone::GOOD, ui::set_fill and one-line labels.
 api: "0.9"
 icon: toggle-switch
