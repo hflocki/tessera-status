@@ -1,18 +1,46 @@
-# What tools/preview.py shows (docs/PREVIEW.md): made-up entities.
+# What tools/preview.py and the picture on the Plugins page show (docs/PREVIEW.md): made-up entities of many kinds,
+# so the picture shows the range. The first examples come first on the picture.
 tiles:
-  - tile: status
-    name: Windows
-    entity: binary_sensor.windows
-    sizes: [1x1, 2x1]
-  - tile: status
-    name: Light
-    entity: light.hall
-    sizes: [1x1]
+  - { tile: status, name: Front door, entity: binary_sensor.front_door, sizes: [1x1] }
+  - { tile: status, name: Windows, entity: binary_sensor.windows, sizes: [1x1], options: { off_text: All closed } }
+  - { tile: status, name: Hall light, entity: light.hall, sizes: [1x1] }
+  - { tile: status, name: Washer, entity: binary_sensor.washer, sizes: [1x1], options: { kind: appliance } }
+  - { tile: status, name: Garage, entity: cover.garage, sizes: [2x1], options: { kind: garage } }
+  - { tile: status, name: Back door, entity: lock.back_door, sizes: [1x1] }
+  - { tile: status, name: Hallway, entity: binary_sensor.hallway_motion, sizes: [1x1] }
+  - { tile: status, name: Living room, entity: sensor.living_room_temperature, sizes: [1x1],
+      options: {} }
+  - { tile: status, name: Kitchen window, entity: binary_sensor.kitchen_window, sizes: [2x1] }
+  - { tile: status, name: Basement, entity: binary_sensor.basement_leak, sizes: [1x1] }
 
 states:
+  binary_sensor.front_door:
+    state: "off"
+    attributes: { device_class: door, friendly_name: Front door }
   binary_sensor.windows:
-    state: "on"
+    state: "off"
     attributes: { device_class: window, friendly_name: Windows }
   light.hall:
     state: "on"
-    attributes: { friendly_name: Hall }
+    attributes: { friendly_name: Hall light }
+  binary_sensor.washer:
+    state: "on"
+    attributes: { device_class: running, friendly_name: Washer }
+  cover.garage:
+    state: "closed"
+    attributes: { device_class: garage, friendly_name: Garage }
+  lock.back_door:
+    state: "locked"
+    attributes: { friendly_name: Back door }
+  binary_sensor.hallway_motion:
+    state: "on"
+    attributes: { device_class: motion, friendly_name: Hallway }
+  sensor.living_room_temperature:
+    state: "21.5"
+    attributes: { device_class: temperature, unit_of_measurement: °C, friendly_name: Living room }
+  binary_sensor.kitchen_window:
+    state: "on"
+    attributes: { device_class: window, friendly_name: Kitchen window }
+  binary_sensor.basement_leak:
+    state: "off"
+    attributes: { device_class: moisture, friendly_name: Basement }

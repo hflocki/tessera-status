@@ -63,6 +63,8 @@ static const Kind KINDS[] = {
     {"appliance", 0xF072A, 0xF072A, "running", "idle", Color::BLUE, Color::GREY},       // washing-machine
     {"alarm", 0xF099D, 0xF099E, "armed", "disarmed", Color::GREEN, Color::GREY},        // shield-lock / shield-off
     {"switch", 0xF0521, 0xF1A26, "on", "off", Color::ACCENT, Color::GREY},              // toggle-switch / -variant-off
+    {"temperature", 0xF050F, 0xF050F, "on", "off", Color::GREY, Color::GREY},         // thermometer
+    {"humidity", 0xF058E, 0xF058E, "on", "off", Color::GREY, Color::GREY},            // water-percent
 };
 
 static const Kind *kind_by_id(const char *id) {
@@ -80,7 +82,8 @@ static const Kind *guess_kind(const std::string &device_class, const std::string
                   {"curtain", "blinds"}, {"awning", "blinds"}, {"motion", "motion"},    {"occupancy", "motion"},
                   {"presence", "presence"}, {"moisture", "leak"}, {"smoke", "smoke"},   {"gas", "smoke"},
                   {"carbon_monoxide", "smoke"}, {"lock", "lock"}, {"plug", "plug"},     {"outlet", "plug"},
-                  {"light", "light"},   {"running", "appliance"}, {"power", "plug"},     {"safety", "alarm"}};
+                  {"light", "light"},   {"running", "appliance"}, {"power", "plug"},     {"safety", "alarm"},
+                  {"temperature", "temperature"}, {"humidity", "humidity"}, {"moisture_percent", "humidity"}};
   for (const auto &m : BY_CLASS)
     if (device_class == m.device_class) return kind_by_id(m.kind);
   const std::string domain = entity.substr(0, entity.find('.'));

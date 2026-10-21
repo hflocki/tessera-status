@@ -10,7 +10,7 @@ Everything is set on the tile itself, in the layout's inspector, without a build
 - **Entity**: a binary sensor, sensor, switch, light, input boolean, lock, cover or fan. A group works too, such as
   `binary_sensor.group_windows`, which is on while any window is open.
 - **What it is**: window, door, garage door, gate, blinds, light, plug, motion, presence, lock, leak, smoke, appliance,
-  alarm or switch. Its icons and words. **Auto** takes it from the entity's device class.
+  alarm, switch, temperature or humidity. Its icons and words. **Auto** takes it from the entity's device class.
 - **Colour when on** and **Colour when off**: red, orange, yellow, green, blue, purple, the accent, or grey for none.
   **Auto** takes the kind's.
 - **Word when on** and **Word when off**: your own, such as "All closed"; empty takes the kind's.

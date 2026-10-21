@@ -72,6 +72,8 @@
     "show_name": "Namen zeigen",
     "show_name_hint": "Der Name der Kachel oder der Entität über dem Zustand.",
     "tap": "Per Tipp schalten",
-    "tap_hint": "Ein Tipp schaltet Licht, Schalter oder Rollladen. Der Screen muss Aktionen ausführen dürfen."
+    "tap_hint": "Ein Tipp schaltet Licht, Schalter oder Rollladen. Der Screen muss Aktionen ausführen dürfen.",
+    "kind_temperature": "Temperatur",
+    "kind_humidity": "Luftfeuchte"
   }
 }

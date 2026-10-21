@@ -72,6 +72,8 @@
     "show_name": "Show the name",
     "show_name_hint": "The tile's or the entity's name above the state.",
     "tap": "Switch on a tap",
-    "tap_hint": "A tap switches a light, a switch or a cover. Needs the screen to be allowed to perform actions."
+    "tap_hint": "A tap switches a light, a switch or a cover. Needs the screen to be allowed to perform actions.",
+    "kind_temperature": "Temperature",
+    "kind_humidity": "Humidity"
   }
 }
