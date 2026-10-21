@@ -1,0 +1,18 @@
+# What tools/preview.py shows (docs/PREVIEW.md): made-up entities.
+tiles:
+  - tile: status
+    name: Windows
+    entity: binary_sensor.windows
+    sizes: [1x1, 2x1]
+  - tile: status
+    name: Light
+    entity: light.hall
+    sizes: [1x1]
+
+states:
+  binary_sensor.windows:
+    state: "on"
+    attributes: { device_class: window, friendly_name: Windows }
+  light.hall:
+    state: "on"
+    attributes: { friendly_name: Hall }
