@@ -74,6 +74,11 @@
     "tap": "Switch on a tap",
     "tap_hint": "A tap switches a light, a switch or a cover. Needs the screen to be allowed to perform actions.",
     "kind_temperature": "Temperature",
-    "kind_humidity": "Humidity"
+    "kind_humidity": "Humidity",
+    "text_size": "Text size",
+    "text_size_hint": "Larger words for a large screen or one read from afar. A long word still steps down to fit.",
+    "size_normal": "Normal",
+    "size_large": "Large",
+    "size_xlarge": "Extra large"
   }
 }

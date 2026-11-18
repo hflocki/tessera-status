@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.0
+- New tile option "Text size": Normal, Large or Extra large. The name and the state take the screen's larger fonts, and
+  the name a darker colour, for large screens such as a 10-inch panel. A long name or state still steps down to fit.
+
 ## 1.0.2
 - New kinds: temperature and humidity, with a thermometer and a drop; Auto finds them by the device class.
 - The picture on the Plugins page shows a door, windows, a light, a washer, a garage, a lock, motion, a temperature

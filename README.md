@@ -15,6 +15,8 @@ Everything is set on the tile itself, in the layout's inspector, without a build
   **Auto** takes the kind's.
 - **Word when on** and **Word when off**: your own, such as "All closed"; empty takes the kind's.
 - **Tint the tile**: the whole tile takes the colour lightly while the entity is on.
+- **Text size**: Normal, Large or Extra large, for a large screen or one read from across the room. A long name or
+  state still steps down a size to fit.
 - **Show the name**, and **Switch on a tap** for a light, a switch or a cover.
 
 A sensor with a number shows it with its unit.

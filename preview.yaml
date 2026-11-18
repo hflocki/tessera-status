@@ -6,6 +6,8 @@ tiles:
   - { tile: status, name: Hall light, entity: light.hall, sizes: [1x1] }
   - { tile: status, name: Washer, entity: binary_sensor.washer, sizes: [1x1], options: { kind: appliance } }
   - { tile: status, name: Garage, entity: cover.garage, sizes: [2x1], options: { kind: garage } }
+  - { tile: status, name: Porch light, entity: light.hall, sizes: [1x1, 2x1], options: { text_size: large } }
+  - { tile: status, name: Front door, entity: binary_sensor.front_door, sizes: [1x1, 2x2], options: { text_size: xlarge } }
   - { tile: status, name: Back door, entity: lock.back_door, sizes: [1x1] }
   - { tile: status, name: Hallway, entity: binary_sensor.hallway_motion, sizes: [1x1] }
   - { tile: status, name: Living room, entity: sensor.living_room_temperature, sizes: [1x1],

@@ -74,6 +74,11 @@
     "tap": "Per Tipp schalten",
     "tap_hint": "Ein Tipp schaltet Licht, Schalter oder Rollladen. Der Screen muss Aktionen ausführen dürfen.",
     "kind_temperature": "Temperatur",
-    "kind_humidity": "Luftfeuchte"
+    "kind_humidity": "Luftfeuchte",
+    "text_size": "Textgröße",
+    "text_size_hint": "Größere Schrift für große Screens oder zum Ablesen aus der Entfernung. Ein langes Wort wird weiterhin kleiner, damit es passt.",
+    "size_normal": "Normal",
+    "size_large": "Groß",
+    "size_xlarge": "Sehr groß"
   }
 }

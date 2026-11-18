@@ -138,6 +138,31 @@ static bool is_state_word(const std::string &s) {
   return false;
 }
 
+// ---- Text sizes ---------------------------------------------------------------------------------------------------
+
+// The tile's text size: the screen's own fonts, a step or two larger, for a large screen seen from across the room.
+enum class Size : uint8_t { NORMAL, LARGE, XLARGE };
+
+static Size size_by_id(const char *id) {
+  if (strcmp(id, "large") == 0) return Size::LARGE;
+  if (strcmp(id, "xlarge") == 0) return Size::XLARGE;
+  return Size::NORMAL;
+}
+
+// The screen's text fonts, largest first, for stepping down when a text does not fit.
+static const Font TEXT_FONTS[] = {Font::HEADLINE, Font::TITLE, Font::BODY_LARGE, Font::BODY};
+
+// The largest font from `start` down to `floor` in which the text fits the room; `floor` when none does.
+static Font fitting(const char *text, int room, Font start, Font floor) {
+  bool started = false;
+  for (Font f : TEXT_FONTS) {
+    if (f == start) started = true;
+    if (!started) continue;
+    if (f == floor || ui::text_width(text, f) <= room) return f;
+  }
+  return floor;
+}
+
 // ---- Drawing helpers ----------------------------------------------------------------------------------------------
 
 static void place(lv_obj_t *obj, int x, int y, int w, int h) {
@@ -180,6 +205,12 @@ class StatusTile : public tessera::Tile {
     snprintf(off_text_, sizeof off_text_, "%s", c.options["off_text"] | "");
     tint_on_ = c.options["tint"] | true;
     show_name_ = c.options["show_name"] | true;
+    size_ = size_by_id(c.options["text_size"] | "normal");
+    switch (size_) {
+      case Size::LARGE: name_font_ = Font::BODY_LARGE; state_font_ = Font::HEADLINE; break;
+      case Size::XLARGE: name_font_ = Font::TITLE; state_font_ = Font::HEADLINE; break;
+      default: name_font_ = Font::BODY; state_font_ = Font::TITLE; break;
+    }
     tap_ = c.options["tap"] | false;
 
     // The tint covers the whole tile, its padding too, with the tile's own corners. Floating: it never scrolls it.
@@ -193,25 +224,39 @@ class StatusTile : public tessera::Tile {
     place(tint_, -pl, -pt, width_ + pl + pr, height_ + pt + pb);
     lv_obj_set_style_bg_opa(tint_, LV_OPA_TRANSP, 0);
 
-    const int name_h = ui::line_height(Font::BODY);
-    state_font_ = Font::TITLE;
+    wide_ = width_ >= height_ * 3 / 2;
+    // A larger text size on a small tile steps down until the words and the smallest circle fit its height.
+    const int min_dia = ui::line_height(Font::ICON_SMALL) + ui::px(8);
+    auto text_height = [this]() {
+      return (show_name_ ? ui::line_height(name_font_) : 0) + ui::line_height(state_font_);
+    };
+    auto fits = [&]() {
+      return wide_ ? text_height() <= height_ : min_dia + ui::px(6) + text_height() <= height_;
+    };
+    while (!fits() && (name_font_ != Font::BODY || state_font_ != Font::TITLE)) {
+      if (state_font_ == Font::HEADLINE) state_font_ = Font::TITLE;
+      else if (name_font_ == Font::TITLE) name_font_ = Font::BODY_LARGE;
+      else name_font_ = Font::BODY;
+    }
+    const int name_h = ui::line_height(name_font_);
     const int state_h = ui::line_height(state_font_);
     const int text_h = (show_name_ ? name_h : 0) + state_h;
-    wide_ = width_ >= height_ * 3 / 2;
     if (wide_) {
       dia_ = std::min({ui::mm(14), height_ - ui::px(8), width_ / 3});
     } else {
       dia_ = std::min({ui::mm(16), width_ - ui::px(8), height_ - text_h - ui::px(8)});
     }
     dia_ = std::max(dia_, ui::line_height(Font::ICON_SMALL) + ui::px(8));
-    const Font icon_font = dia_ >= ui::line_height(Font::ICON) + ui::px(12) ? Font::ICON : Font::ICON_SMALL;
+    // The large icon where it fits; on the larger text sizes with less room around it, as the words are larger too.
+    const int icon_pad = size_ == Size::NORMAL ? ui::px(12) : ui::px(6);
+    const Font icon_font = dia_ >= ui::line_height(Font::ICON) + icon_pad ? Font::ICON : Font::ICON_SMALL;
     const int ih = ui::line_height(icon_font);
 
     circle_ = ui::block(c.parent, theme::TRACK);
     lv_obj_set_style_radius(circle_, LV_RADIUS_CIRCLE, 0);
     icon_ = ui::label(circle_, icon_font, theme::MUTED);
     lv_obj_set_style_text_align(icon_, LV_TEXT_ALIGN_CENTER, 0);
-    name_ = ui::label(c.parent, Font::BODY, theme::MUTED);
+    name_ = ui::label(c.parent, name_font_, name_role());
     state_ = ui::label(c.parent, state_font_, theme::INK);
 
     if (wide_) {
@@ -256,8 +301,10 @@ class StatusTile : public tessera::Tile {
   void paint_now() {
     const char *title = tile_name_[0] ? tile_name_ : name_text_[0] ? name_text_ : plugin_->text("title");
     if (show_name_) {
+      // A long name steps down a size rather than being cut, but never below the screen's own size.
+      ui::set_font(name_, fitting(title, text_room(), name_font_, Font::BODY));
       ui::set_text(name_, title);
-      ui::set_color(name_, theme::MUTED);
+      ui::set_color(name_, name_role());
     }
     const std::string s = state_text_;
     const Kind *k = strcmp(kind_id_, "auto") == 0 ? guess_kind(device_class_, entity_) : kind_by_id(kind_id_);
@@ -315,18 +362,23 @@ class StatusTile : public tessera::Tile {
       text = off_text_[0] ? off_text_ : plugin_->text(k->text_off);
     }
     // A long word ("Geschlossen") steps down a size on a narrow tile rather than being cut.
-    const int room = wide_ ? width_ - dia_ - ui::px(12) : width_;
-    ui::set_font(state_, ui::text_width(text.c_str(), Font::TITLE) <= room ? Font::TITLE : Font::BODY_LARGE);
+    ui::set_font(state_, fitting(text.c_str(), text_room(), state_font_, Font::BODY_LARGE));
     ui::set_text(state_, text);
     if (colored) paint(state_, color, false);
     else ui::set_color(state_, word ? theme::INK_SOFT : theme::INK);
   }
 
+  // The width the words have: beside the circle on a wide tile, the whole tile else.
+  int text_room() const { return wide_ ? width_ - dia_ - ui::px(12) : width_; }
+  // The name in the muted colour on the normal size, a step darker on the larger ones, to be read from afar.
+  theme::Role name_role() const { return size_ == Size::NORMAL ? theme::MUTED : theme::INK_SOFT; }
+
   const tessera::Plugin *plugin_;
   int width_ = 0, height_ = 0, dia_ = 0;
   bool wide_ = false, tint_on_ = true, show_name_ = true, tap_ = false, have_state_ = false, wrong_ = false;
   Color on_color_ = Color::AUTO, off_color_ = Color::AUTO;
-  Font state_font_ = Font::TITLE;
+  Size size_ = Size::NORMAL;
+  Font name_font_ = Font::BODY, state_font_ = Font::TITLE;
   char entity_[96]{}, tile_name_[48]{}, kind_id_[16]{}, on_text_[48]{}, off_text_[48]{};
   char state_text_[64]{}, name_text_[64]{}, device_class_[32]{}, unit_[16]{};
   lv_obj_t *tint_{}, *circle_{}, *icon_{}, *name_{}, *state_{};
