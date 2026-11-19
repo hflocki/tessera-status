@@ -34,3 +34,14 @@ A sensor with a number shows it with its unit.
 
 - One entity per tile. For several windows at once, make a group in Home Assistant (Settings, Helpers, Group) and
   choose the group.
+
+## A hobby project
+
+This plugin is made and maintained in my spare time, for free and without any warranty. Bug reports and ideas are
+welcome, but please keep in mind:
+
+- There is no support and no guaranteed response time. I answer when I find the time, which can take days or weeks.
+- Not every request gets built. I add what fits the plugin and what I can keep working over time.
+- Issues are for bugs and concrete ideas, not for chatting. Please use the forms, keep to one topic per issue, and
+  add a 👍 reaction instead of a "+1" or "same here" comment.
+- Pull requests are welcome; for a larger change, open an issue first so we can agree on the way.
