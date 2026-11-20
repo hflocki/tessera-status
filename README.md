@@ -16,8 +16,8 @@ Everything is set on the tile itself, in the layout's inspector, without a build
   own icon from Home Assistant when it is one of them, else the kind's.
 - **Colour when on** and **Colour when off**: red, orange, yellow, green, blue, purple, the accent, or grey for none.
   **Auto** takes the kind's.
-- **Word when on** and **Word when off**: your own, such as "All closed"; empty takes the kind's. For a value,
-  **Word when on** is a template: `{state}` stands for the value, such as "Diesel {state}".
+- **Word when on** and **Word when off**: your own, such as "All closed"; empty takes the kind's. For a value or a
+  text, **Word when on** is the name above it, such as "Diesel"; the value stays as it is.
 - **Tint the tile**: the whole tile takes the colour lightly while the entity is on.
 - **Text size**: Normal, Large or Extra large, for a large screen or one read from across the room. A long name or
   state still steps down a size to fit.

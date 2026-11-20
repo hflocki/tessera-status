@@ -64,7 +64,7 @@
     "color_accent": "Akzent",
     "color_grey": "Grau (keine)",
     "on_text": "Text bei an",
-    "on_text_hint": "Z. B. \"Offen\" oder \"Jemand da\". Leer: das Wort der Art. Bei einem Wert steht {state} für ihn: \"Diesel {state}\".",
+    "on_text_hint": "Z. B. \"Offen\" oder \"Jemand da\". Leer: das Wort der Art. Bei einem Wert oder Text: der Name darüber, z. B. \"Diesel\".",
     "off_text": "Text bei aus",
     "off_text_hint": "Z. B. \"Alle zu\". Leer: das Wort der Art.",
     "tint": "Kachel einfärben",

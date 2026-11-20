@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.2
+- For a value or text, "Word when on" is now the name above it, such as "Diesel", and the value stays as it is. The
+  `{state}` template of 1.2.0 is gone.
+
 ## 1.2.1
 - A tile with neither the name nor the state shows its icon without empty labels lying outside it.
 - The first release with everything of 1.2.0: the kind "Text or value", the "Icon" choice and "Show the state".

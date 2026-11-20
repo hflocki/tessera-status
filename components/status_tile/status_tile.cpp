@@ -378,18 +378,26 @@ class StatusTile : public tessera::Tile {
 
  private:
   void paint_now() {
-    const char *title = tile_name_[0] ? tile_name_ : name_text_[0] ? name_text_ : plugin_->text("title");
+    const std::string s = state_text_;
+    const Kind *k = strcmp(kind_id_, "auto") == 0 ? guess_kind(device_class_, entity_) : kind_by_id(kind_id_);
+    if (!k) k = kind_by_id("switch");
+    const bool known = have_state_ && !wrong_ && s != "unavailable" && s != "unknown" && !s.empty();
+    // A value (a number, a text) and every state of the kind "text": shown as it is, under the tile's own words.
+    const bool value_shown = known && (is_text_kind(k) || !is_state_word(s));
+
+    // The name: for a value, the tile's "word when on" when it has one; else the tile's name, else the entity's.
+    const char *title = value_shown && on_text_[0] ? on_text_
+                      : tile_name_[0]              ? tile_name_
+                      : name_text_[0]              ? name_text_
+                                                   : plugin_->text("title");
     if (show_name_) {
       // A long name steps down a size rather than being cut, but never below the screen's own size.
       ui::set_font(name_, fitting(title, text_room(), name_font_, Font::BODY));
       ui::set_text(name_, title);
       ui::set_color(name_, name_role());
     }
-    const std::string s = state_text_;
-    const Kind *k = strcmp(kind_id_, "auto") == 0 ? guess_kind(device_class_, entity_) : kind_by_id(kind_id_);
-    if (!k) k = kind_by_id("switch");
 
-    if (!have_state_ || wrong_ || s == "unavailable" || s == "unknown" || s.empty()) {
+    if (!known) {
       // Nothing to show yet: the kind's off icon, grey, and why.
       set_bg_opa(tint_, LV_OPA_TRANSP);
       ui::set_fill(circle_, Tone::NORMAL, theme::TRACK);
@@ -403,10 +411,9 @@ class StatusTile : public tessera::Tile {
       return;
     }
 
-    // A state word (open, on, locked) has its kind's words and colours; a value (a number, a text) and every state
-    // of the kind "text" are shown as they are, in the tile's colour when on: grey on Auto.
-    const bool as_text = is_text_kind(k);
-    const bool word = !as_text && is_state_word(s);
+    // A state word (open, on, locked) has its kind's words and colours; a value is shown in the tile's colour when on:
+    // grey on Auto.
+    const bool word = !value_shown;
     const bool on = word && is_on(s);
     const Color color = !word ? (on_color_ == Color::AUTO ? Color::GREY : on_color_)
                       : on    ? (on_color_ == Color::AUTO ? k->on : on_color_)
@@ -437,8 +444,7 @@ class StatusTile : public tessera::Tile {
 
     if (!show_state_) return;
 
-    // The words: the tile's own, else the kind's; a value with its unit when the state is no state word. For a value,
-    // the tile's "word when on" is a template: {state} stands for the value; without it the words stand alone.
+    // The words: the tile's own, else the kind's; a value as it is, with its unit.
     std::string text;
     if (!word) {
       std::string value = s;
@@ -446,7 +452,7 @@ class StatusTile : public tessera::Tile {
         for (char &ch : value)
           if (ch == '.') ch = *d;
       if (unit_[0]) value += std::string(" ") + unit_;
-      text = on_text_[0] ? fill_in(on_text_, value) : value;
+      text = value;
     } else if (on) {
       text = on_text_[0] ? on_text_ : plugin_->text(k->text_on);
     } else {
@@ -464,15 +470,6 @@ class StatusTile : public tessera::Tile {
     if (icon_choice_) return icon_choice_;
     if (entity_icon_) return entity_icon_;
     return on ? k->icon_on : k->icon_off;
-  }
-
-  // The tile's words with every {state} replaced by the value.
-  static std::string fill_in(const std::string &words, const std::string &value) {
-    static const std::string KEY = "{state}";
-    std::string out = words;
-    for (size_t at = out.find(KEY); at != std::string::npos; at = out.find(KEY, at + value.size()))
-      out.replace(at, KEY.size(), value);
-    return out;
   }
 
   // The width the words have: beside the circle on a wide tile, the whole tile else.

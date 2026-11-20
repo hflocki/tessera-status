@@ -64,7 +64,7 @@
     "color_accent": "Accent",
     "color_grey": "Grey (none)",
     "on_text": "Word when on",
-    "on_text_hint": "Such as \"Open\" or \"Someone home\". Empty: the kind's word. For a value, {state} stands for it: \"Diesel {state}\".",
+    "on_text_hint": "Such as \"Open\" or \"Someone home\". Empty: the kind's word. For a value or text: the name above it, such as \"Diesel\".",
     "off_text": "Word when off",
     "off_text_hint": "Such as \"All closed\". Empty: the kind's word.",
     "tint": "Tint the tile",

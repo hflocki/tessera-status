@@ -9,7 +9,7 @@ tiles:
   - { tile: status, name: Porch light, entity: light.hall, sizes: [1x1, 2x1], options: { text_size: large } }
   - { tile: status, name: Front door, entity: binary_sensor.front_door, sizes: [1x1, 2x2], options: { text_size: xlarge } }
   - { tile: status, name: Diesel, entity: sensor.diesel_price, sizes: [1x1, 2x1],
-      options: { kind: text, icon: cash, on_color: blue, on_text: "{state}" } }
+      options: { kind: text, icon: cash, on_color: blue, on_text: Diesel } }
   - { tile: status, name: Back door, entity: lock.back_door, sizes: [1x1] }
   - { tile: status, name: Alarm, entity: binary_sensor.front_door, sizes: [1x1],
       options: { icon: home, show_name: false, show_state: false } }
