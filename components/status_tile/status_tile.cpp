@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <utility>
 
 namespace esphome::status_tile {
 
@@ -347,8 +348,13 @@ class StatusTile : public tessera::Tile {
       place(name_, 0, top + dia_ + gap, width_, name_h);
       place(state_, 0, top + dia_ + gap + (show_name_ ? name_h : 0), width_, state_h);
     }
-    if (!show_name_) ui::set_text(name_, "");
-    if (!show_state_) ui::set_text(state_, "");
+    // A label the tile does not show is hidden and kept inside the tile: none of its room lies outside.
+    for (auto [label, shown] : {std::pair{name_, show_name_}, std::pair{state_, show_state_}}) {
+      if (shown) continue;
+      ui::set_text(label, "");
+      place(label, 0, 0, 1, 1);
+      lv_obj_add_flag(label, LV_OBJ_FLAG_HIDDEN);
+    }
     paint_now();
   }
 

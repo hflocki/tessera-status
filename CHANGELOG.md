@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.1
+- A tile with neither the name nor the state shows its icon without empty labels lying outside it.
+- The first release with everything of 1.2.0: the kind "Text or value", the "Icon" choice and "Show the state".
+
 ## 1.2.0
 - New kind "Text or value": the state as it is, such as a fuel price or a text, without on and off.
 - A value or text takes the tile's "Colour when on" (grey on Auto, as before), and its "Word when on" as a template:

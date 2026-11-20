@@ -23,14 +23,14 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           path: plugin
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: MaxGramser/tessera-plugins
           path: tessera-plugins
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - run: pip install pyyaml
@@ -53,19 +53,19 @@ jobs:
     needs: check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           path: plugin
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: MaxGramser/tessera-plugins
           path: tessera-plugins
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - run: sudo apt-get update && sudo apt-get install -y build-essential libsdl2-dev python3-venv xvfb
       - name: Bench cache (Tessera checkout, ESPHome, build files)
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: tessera-plugins/tools/.cache
           key: bench-${{ runner.os }}-${{ github.run_id }}
@@ -76,7 +76,7 @@ jobs:
         run: xvfb-run -a python3 tessera-plugins/tools/preview.py plugin --strict
       - name: Pictures
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: preview
           path: plugin/.preview
@@ -87,7 +87,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Release with the changelog entry
         env:
           GH_TOKEN: ${{ github.token }}
