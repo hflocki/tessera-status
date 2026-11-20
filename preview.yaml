@@ -8,7 +8,11 @@ tiles:
   - { tile: status, name: Garage, entity: cover.garage, sizes: [2x1], options: { kind: garage } }
   - { tile: status, name: Porch light, entity: light.hall, sizes: [1x1, 2x1], options: { text_size: large } }
   - { tile: status, name: Front door, entity: binary_sensor.front_door, sizes: [1x1, 2x2], options: { text_size: xlarge } }
+  - { tile: status, name: Diesel, entity: sensor.diesel_price, sizes: [1x1, 2x1],
+      options: { kind: text, icon: cash, on_color: blue, on_text: "{state}" } }
   - { tile: status, name: Back door, entity: lock.back_door, sizes: [1x1] }
+  - { tile: status, name: Alarm, entity: binary_sensor.front_door, sizes: [1x1],
+      options: { icon: home, show_name: false, show_state: false } }
   - { tile: status, name: Hallway, entity: binary_sensor.hallway_motion, sizes: [1x1] }
   - { tile: status, name: Living room, entity: sensor.living_room_temperature, sizes: [1x1],
       options: {} }
@@ -31,6 +35,9 @@ states:
   cover.garage:
     state: "closed"
     attributes: { device_class: garage, friendly_name: Garage }
+  sensor.diesel_price:
+    state: "1.659"
+    attributes: { unit_of_measurement: €, friendly_name: Diesel }
   lock.back_door:
     state: "locked"
     attributes: { friendly_name: Back door }

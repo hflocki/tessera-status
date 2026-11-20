@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.0
+- New kind "Text or value": the state as it is, such as a fuel price or a text, without on and off.
+- A value or text takes the tile's "Colour when on" (grey on Auto, as before), and its "Word when on" as a template:
+  `{state}` stands for the value, "Diesel {state}".
+- New option "Icon": one of 43 icons, or Auto, which takes the entity's own icon from Home Assistant when it is one of
+  them, else the kind's.
+- New toggle "Show the state": off, with "Show the name" off too, the tile shows only its icon.
+
 ## 1.1.0
 - New tile option "Text size": Normal, Large or Extra large. The name and the state take the screen's larger fonts, and
   the name a darker colour, for large screens such as a 10-inch panel. A long name or state still steps down to fit.

@@ -65,7 +65,11 @@ static const Kind KINDS[] = {
     {"switch", 0xF0521, 0xF1A26, "on", "off", Color::ACCENT, Color::GREY},              // toggle-switch / -variant-off
     {"temperature", 0xF050F, 0xF050F, "on", "off", Color::GREY, Color::GREY},         // thermometer
     {"humidity", 0xF058E, 0xF058E, "on", "off", Color::GREY, Color::GREY},            // water-percent
+    {"text", 0xF02FD, 0xF02FD, "on", "off", Color::GREY, Color::GREY},                // information-outline
 };
+
+// The kind that has no on and off: the state as it is, in the tile's colour and with the tile's own words.
+static bool is_text_kind(const Kind *k) { return strcmp(k->id, "text") == 0; }
 
 static const Kind *kind_by_id(const char *id) {
   for (const Kind &k : KINDS)
@@ -138,6 +142,70 @@ static bool is_state_word(const std::string &s) {
   return false;
 }
 
+// ---- Icons --------------------------------------------------------------------------------------------------------
+
+// The icons a tile may choose, by their Material Design Icons name, all of Tessera's set (another one draws nothing).
+// The same names find the entity's own icon ("mdi:cash") when Home Assistant gives it one of them.
+struct Symbol {
+  const char *name;
+  uint32_t codepoint;
+};
+
+static const Symbol SYMBOLS[] = {
+    {"information-outline", 0xF02FD},
+    {"form-textbox", 0xF060E},
+    {"cash", 0xF0114},
+    {"ev-station", 0xF05F1},
+    {"car", 0xF010B},
+    {"car-electric", 0xF0B6C},
+    {"car-battery", 0xF010C},
+    {"gauge", 0xF029A},
+    {"speedometer", 0xF04C5},
+    {"meter-electric", 0xF1A57},
+    {"meter-gas", 0xF1A59},
+    {"flash", 0xF0241},
+    {"solar-power", 0xF0A72},
+    {"home-battery", 0xF1901},
+    {"battery", 0xF0079},
+    {"transmission-tower", 0xF0D3E},
+    {"thermometer", 0xF050F},
+    {"water-percent", 0xF058E},
+    {"water", 0xF058C},
+    {"storage-tank", 0xF1A75},
+    {"fire", 0xF0238},
+    {"snowflake", 0xF0717},
+    {"weather-partly-cloudy", 0xF0595},
+    {"weather-windy", 0xF059D},
+    {"leaf", 0xF032A},
+    {"flower", 0xF024A},
+    {"trash-can", 0xF0A79},
+    {"recycle", 0xF044C},
+    {"calendar", 0xF00ED},
+    {"clock-outline", 0xF0150},
+    {"bell", 0xF009A},
+    {"heart", 0xF02D1},
+    {"home", 0xF02DC},
+    {"account", 0xF0004},
+    {"wifi", 0xF05A9},
+    {"router-wireless", 0xF0469},
+    {"cog", 0xF0493},
+    {"package", 0xF03D3},
+    {"mailbox", 0xF06EE},
+    {"power-plug", 0xF06A5},
+    {"lightbulb", 0xF0335},
+    {"television", 0xF0502},
+    {"music", 0xF075A},
+};
+
+// An icon by its name, with or without "mdi:"; 0 for none or one this tile does not know.
+static uint32_t symbol_by_name(const char *name) {
+  if (strncmp(name, "mdi:", 4) == 0) name += 4;
+  if (!*name) return 0;
+  for (const Symbol &sym : SYMBOLS)
+    if (strcmp(sym.name, name) == 0) return sym.codepoint;
+  return 0;
+}
+
 // ---- Text sizes ---------------------------------------------------------------------------------------------------
 
 // The tile's text size: the screen's own fonts, a step or two larger, for a large screen seen from across the room.
@@ -205,6 +273,8 @@ class StatusTile : public tessera::Tile {
     snprintf(off_text_, sizeof off_text_, "%s", c.options["off_text"] | "");
     tint_on_ = c.options["tint"] | true;
     show_name_ = c.options["show_name"] | true;
+    show_state_ = c.options["show_state"] | true;
+    icon_choice_ = symbol_by_name(c.options["icon"] | "");
     size_ = size_by_id(c.options["text_size"] | "normal");
     switch (size_) {
       case Size::LARGE: name_font_ = Font::BODY_LARGE; state_font_ = Font::HEADLINE; break;
@@ -224,11 +294,12 @@ class StatusTile : public tessera::Tile {
     place(tint_, -pl, -pt, width_ + pl + pr, height_ + pt + pb);
     lv_obj_set_style_bg_opa(tint_, LV_OPA_TRANSP, 0);
 
-    wide_ = width_ >= height_ * 3 / 2;
+    // With neither the name nor the state, the icon alone stands in the middle of the tile.
+    wide_ = width_ >= height_ * 3 / 2 && (show_name_ || show_state_);
     // A larger text size on a small tile steps down until the words and the smallest circle fit its height.
     const int min_dia = ui::line_height(Font::ICON_SMALL) + ui::px(8);
     auto text_height = [this]() {
-      return (show_name_ ? ui::line_height(name_font_) : 0) + ui::line_height(state_font_);
+      return (show_name_ ? ui::line_height(name_font_) : 0) + (show_state_ ? ui::line_height(state_font_) : 0);
     };
     auto fits = [&]() {
       return wide_ ? text_height() <= height_ : min_dia + ui::px(6) + text_height() <= height_;
@@ -240,7 +311,7 @@ class StatusTile : public tessera::Tile {
     }
     const int name_h = ui::line_height(name_font_);
     const int state_h = ui::line_height(state_font_);
-    const int text_h = (show_name_ ? name_h : 0) + state_h;
+    const int text_h = (show_name_ ? name_h : 0) + (show_state_ ? state_h : 0);
     if (wide_) {
       dia_ = std::min({ui::mm(14), height_ - ui::px(8), width_ / 3});
     } else {
@@ -268,7 +339,7 @@ class StatusTile : public tessera::Tile {
       place(state_, x, top + (show_name_ ? name_h : 0), w, state_h);
     } else {
       const int gap = ui::px(6);
-      const int top = std::max(0, (height_ - dia_ - gap - text_h) / 2);
+      const int top = std::max(0, (height_ - dia_ - (text_h ? gap : 0) - text_h) / 2);
       place(circle_, (width_ - dia_) / 2, top, dia_, dia_);
       inside(circle_, icon_, dia_, ih);
       lv_obj_set_style_text_align(name_, LV_TEXT_ALIGN_CENTER, 0);
@@ -277,6 +348,7 @@ class StatusTile : public tessera::Tile {
       place(state_, 0, top + dia_ + gap + (show_name_ ? name_h : 0), width_, state_h);
     }
     if (!show_name_) ui::set_text(name_, "");
+    if (!show_state_) ui::set_text(state_, "");
     paint_now();
   }
 
@@ -287,6 +359,7 @@ class StatusTile : public tessera::Tile {
     JsonObjectConst a = data["attributes"];
     snprintf(device_class_, sizeof device_class_, "%s", a["device_class"] | "");
     snprintf(unit_, sizeof unit_, "%s", a["unit_of_measurement"] | "");
+    entity_icon_ = symbol_by_name(a["icon"] | "");
     wrong_ = strcmp(data["wait"] | "", "wrong_entity") == 0;
     paint_now();
   }
@@ -315,18 +388,26 @@ class StatusTile : public tessera::Tile {
       set_bg_opa(tint_, LV_OPA_TRANSP);
       ui::set_fill(circle_, Tone::NORMAL, theme::TRACK);
       set_bg_opa(circle_, LV_OPA_60);
-      ui::set_text(icon_, ui::icon(k->icon_off));
+      ui::set_text(icon_, ui::icon(icon_for(k, false)));
       ui::set_color(icon_, theme::MUTED);
-      ui::set_text(state_, plugin_->text(wrong_ ? "wrong" : have_state_ ? "unavailable" : "choose"));
-      ui::set_color(state_, theme::MUTED);
+      if (show_state_) {
+        ui::set_text(state_, plugin_->text(wrong_ ? "wrong" : have_state_ ? "unavailable" : "choose"));
+        ui::set_color(state_, theme::MUTED);
+      }
       return;
     }
 
-    const bool word = is_state_word(s);
-    const bool on = is_on(s);
-    const Color color = on ? (on_color_ == Color::AUTO ? k->on : on_color_)
-                           : (off_color_ == Color::AUTO ? k->off : off_color_);
-    const bool colored = color != Color::GREY && word;
+    // A state word (open, on, locked) has its kind's words and colours; a value (a number, a text) and every state
+    // of the kind "text" are shown as they are, in the tile's colour when on: grey on Auto.
+    const bool as_text = is_text_kind(k);
+    const bool word = !as_text && is_state_word(s);
+    const bool on = word && is_on(s);
+    const Color color = !word ? (on_color_ == Color::AUTO ? Color::GREY : on_color_)
+                      : on    ? (on_color_ == Color::AUTO ? k->on : on_color_)
+                              : (off_color_ == Color::AUTO ? k->off : off_color_);
+    const bool colored = color != Color::GREY;
+    // A value counts as on for the tint: it is there.
+    const bool lit = word ? on : true;
 
     // The circle lightly in the state's colour and the icon fully; grey, a plain circle.
     if (colored) {
@@ -338,24 +419,28 @@ class StatusTile : public tessera::Tile {
       set_bg_opa(circle_, LV_OPA_60);
       ui::set_color(icon_, theme::MUTED);
     }
-    ui::set_text(icon_, ui::icon(on ? k->icon_on : k->icon_off));
+    ui::set_text(icon_, ui::icon(icon_for(k, on)));
 
     // The whole tile tinted while it is on, when the tile says so.
-    if (tint_on_ && on && colored) {
+    if (tint_on_ && lit && colored) {
       paint(tint_, color, true);
       set_bg_opa(tint_, LV_OPA_10);
     } else {
       set_bg_opa(tint_, LV_OPA_TRANSP);
     }
 
-    // The words: the tile's own, else the kind's; a value with its unit when the state is no state word.
+    if (!show_state_) return;
+
+    // The words: the tile's own, else the kind's; a value with its unit when the state is no state word. For a value,
+    // the tile's "word when on" is a template: {state} stands for the value; without it the words stand alone.
     std::string text;
     if (!word) {
-      text = s;
-      if (const char *d = plugin_->text("decimal"); d && *d && *d != '.' && !text.empty() && isdigit(static_cast<unsigned char>(text.back())))
-        for (char &ch : text)
+      std::string value = s;
+      if (const char *d = plugin_->text("decimal"); d && *d && *d != '.' && !value.empty() && isdigit(static_cast<unsigned char>(value.back())))
+        for (char &ch : value)
           if (ch == '.') ch = *d;
-      if (unit_[0]) text += std::string(" ") + unit_;
+      if (unit_[0]) value += std::string(" ") + unit_;
+      text = on_text_[0] ? fill_in(on_text_, value) : value;
     } else if (on) {
       text = on_text_[0] ? on_text_ : plugin_->text(k->text_on);
     } else {
@@ -368,6 +453,22 @@ class StatusTile : public tessera::Tile {
     else ui::set_color(state_, word ? theme::INK_SOFT : theme::INK);
   }
 
+  // The icon: the one chosen on the tile, else the entity's own when it is one of Tessera's set, else the kind's.
+  uint32_t icon_for(const Kind *k, bool on) const {
+    if (icon_choice_) return icon_choice_;
+    if (entity_icon_) return entity_icon_;
+    return on ? k->icon_on : k->icon_off;
+  }
+
+  // The tile's words with every {state} replaced by the value.
+  static std::string fill_in(const std::string &words, const std::string &value) {
+    static const std::string KEY = "{state}";
+    std::string out = words;
+    for (size_t at = out.find(KEY); at != std::string::npos; at = out.find(KEY, at + value.size()))
+      out.replace(at, KEY.size(), value);
+    return out;
+  }
+
   // The width the words have: beside the circle on a wide tile, the whole tile else.
   int text_room() const { return wide_ ? width_ - dia_ - ui::px(12) : width_; }
   // The name in the muted colour on the normal size, a step darker on the larger ones, to be read from afar.
@@ -375,7 +476,9 @@ class StatusTile : public tessera::Tile {
 
   const tessera::Plugin *plugin_;
   int width_ = 0, height_ = 0, dia_ = 0;
-  bool wide_ = false, tint_on_ = true, show_name_ = true, tap_ = false, have_state_ = false, wrong_ = false;
+  bool wide_ = false, tint_on_ = true, show_name_ = true, show_state_ = true, tap_ = false, have_state_ = false;
+  bool wrong_ = false;
+  uint32_t icon_choice_ = 0, entity_icon_ = 0;
   Color on_color_ = Color::AUTO, off_color_ = Color::AUTO;
   Size size_ = Size::NORMAL;
   Font name_font_ = Font::BODY, state_font_ = Font::TITLE;

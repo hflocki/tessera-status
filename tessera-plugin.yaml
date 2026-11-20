@@ -1,7 +1,7 @@
 # One Home Assistant entity on a tile, as a state: a window, a door, a light, motion, a lock, a leak. Its icon and
 # colour follow the state, both chosen on the tile. Every field is explained in docs/MANIFEST.md of tessera-plugins.
 id: status_tile
-version: 1.1.0
+version: 1.2.0
 # 0.9: Tone::GOOD, ui::set_fill and one-line labels.
 api: "0.9"
 icon: toggle-switch
@@ -12,7 +12,7 @@ topics: [home]
 requires:
   esphome: 2026.6.2
 boards: any
-flash_kb: 12
+flash_kb: 14
 
 permissions:
   # A tap may switch a light, a switch or a cover, when the tile's "Tap" says so.
@@ -28,7 +28,7 @@ tiles:
     example: tile_example
     # The entity is chosen in the tile's inspector: no build needed to change it.
     domains: [binary_sensor, sensor, switch, light, input_boolean, lock, cover, fan]
-    attributes: [device_class, unit_of_measurement]
+    attributes: [device_class, unit_of_measurement, icon]
     options:
       - id: kind
         kind: choice
@@ -54,6 +54,7 @@ tiles:
           - { value: switch, label: kind_switch }
           - { value: temperature, label: kind_temperature }
           - { value: humidity, label: kind_humidity }
+          - { value: text, label: kind_text }
       - { id: on_color, kind: choice, default: auto, label: on_color, hint: on_color_hint, choices: [
             { value: auto, label: color_auto }, { value: red, label: color_red },
             { value: orange, label: color_orange }, { value: yellow, label: color_yellow },
@@ -66,6 +67,56 @@ tiles:
             { value: green, label: color_green }, { value: blue, label: color_blue },
             { value: purple, label: color_purple }, { value: accent, label: color_accent },
             { value: grey, label: color_grey } ] }
+      - id: icon
+        kind: choice
+        default: auto
+        label: icon
+        hint: icon_hint
+        choices:
+          - { value: auto, label: icon_auto }
+          - { value: information-outline, label: icon_information_outline }
+          - { value: form-textbox, label: icon_form_textbox }
+          - { value: cash, label: icon_cash }
+          - { value: ev-station, label: icon_ev_station }
+          - { value: car, label: icon_car }
+          - { value: car-electric, label: icon_car_electric }
+          - { value: car-battery, label: icon_car_battery }
+          - { value: gauge, label: icon_gauge }
+          - { value: speedometer, label: icon_speedometer }
+          - { value: meter-electric, label: icon_meter_electric }
+          - { value: meter-gas, label: icon_meter_gas }
+          - { value: flash, label: icon_flash }
+          - { value: solar-power, label: icon_solar_power }
+          - { value: home-battery, label: icon_home_battery }
+          - { value: battery, label: icon_battery }
+          - { value: transmission-tower, label: icon_transmission_tower }
+          - { value: thermometer, label: icon_thermometer }
+          - { value: water-percent, label: icon_water_percent }
+          - { value: water, label: icon_water }
+          - { value: storage-tank, label: icon_storage_tank }
+          - { value: fire, label: icon_fire }
+          - { value: snowflake, label: icon_snowflake }
+          - { value: weather-partly-cloudy, label: icon_weather_partly_cloudy }
+          - { value: weather-windy, label: icon_weather_windy }
+          - { value: leaf, label: icon_leaf }
+          - { value: flower, label: icon_flower }
+          - { value: trash-can, label: icon_trash_can }
+          - { value: recycle, label: icon_recycle }
+          - { value: calendar, label: icon_calendar }
+          - { value: clock-outline, label: icon_clock_outline }
+          - { value: bell, label: icon_bell }
+          - { value: heart, label: icon_heart }
+          - { value: home, label: icon_home }
+          - { value: account, label: icon_account }
+          - { value: wifi, label: icon_wifi }
+          - { value: router-wireless, label: icon_router_wireless }
+          - { value: cog, label: icon_cog }
+          - { value: package, label: icon_package }
+          - { value: mailbox, label: icon_mailbox }
+          - { value: power-plug, label: icon_power_plug }
+          - { value: lightbulb, label: icon_lightbulb }
+          - { value: television, label: icon_television }
+          - { value: music, label: icon_music }
       - { id: on_text, kind: text, default: "", label: on_text, hint: on_text_hint }
       - { id: off_text, kind: text, default: "", label: off_text, hint: off_text_hint }
       - { id: tint, kind: toggle, default: true, label: tint, hint: tint_hint }
@@ -73,4 +124,5 @@ tiles:
             { value: normal, label: size_normal }, { value: large, label: size_large },
             { value: xlarge, label: size_xlarge } ] }
       - { id: show_name, kind: toggle, default: true, label: show_name, hint: show_name_hint }
+      - { id: show_state, kind: toggle, default: true, label: show_state, hint: show_state_hint }
       - { id: tap, kind: toggle, default: false, label: tap, hint: tap_hint }

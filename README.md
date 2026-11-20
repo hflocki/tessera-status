@@ -10,16 +10,21 @@ Everything is set on the tile itself, in the layout's inspector, without a build
 - **Entity**: a binary sensor, sensor, switch, light, input boolean, lock, cover or fan. A group works too, such as
   `binary_sensor.group_windows`, which is on while any window is open.
 - **What it is**: window, door, garage door, gate, blinds, light, plug, motion, presence, lock, leak, smoke, appliance,
-  alarm, switch, temperature or humidity. Its icons and words. **Auto** takes it from the entity's device class.
+  alarm, switch, temperature, humidity, or **Text or value** for a state shown as it is (a fuel price, a text). Its
+  icons and words. **Auto** takes it from the entity's device class.
+- **Icon**: one of 43 icons, such as money, a charging station, a gauge, a tank or a bin. **Auto** takes the entity's
+  own icon from Home Assistant when it is one of them, else the kind's.
 - **Colour when on** and **Colour when off**: red, orange, yellow, green, blue, purple, the accent, or grey for none.
   **Auto** takes the kind's.
-- **Word when on** and **Word when off**: your own, such as "All closed"; empty takes the kind's.
+- **Word when on** and **Word when off**: your own, such as "All closed"; empty takes the kind's. For a value,
+  **Word when on** is a template: `{state}` stands for the value, such as "Diesel {state}".
 - **Tint the tile**: the whole tile takes the colour lightly while the entity is on.
 - **Text size**: Normal, Large or Extra large, for a large screen or one read from across the room. A long name or
   state still steps down a size to fit.
-- **Show the name**, and **Switch on a tap** for a light, a switch or a cover.
+- **Show the name** and **Show the state**: both off, and the tile shows only its icon.
+- **Switch on a tap** for a light, a switch or a cover.
 
-A sensor with a number shows it with its unit.
+A sensor with a number shows it with its unit, in the tile's **Colour when on** (grey on Auto).
 
 ## Set up
 
@@ -32,6 +37,7 @@ A sensor with a number shows it with its unit.
 
 ## Good to know
 
+- A long entity name: give the tile its own, shorter name in the layout's inspector; the tile takes it instead.
 - One entity per tile. For several windows at once, make a group in Home Assistant (Settings, Helpers, Group) and
   choose the group.
 
