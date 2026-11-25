@@ -124,6 +124,21 @@ static void paint(lv_obj_t *obj, Color c, bool fill) {
   else set_readable(obj, tone, role);
 }
 
+// A colour as one of the screen's card colours, for a tile coloured edge to edge (0.26). The accent has no card colour
+// of its own: it takes blue. Grey and auto give the card back to what the person chose for it.
+static tessera::CardColor card_of(Color c) {
+  switch (c) {
+    case Color::RED: return tessera::CardColor::RED;
+    case Color::ORANGE: return tessera::CardColor::ORANGE;
+    case Color::YELLOW: return tessera::CardColor::YELLOW;
+    case Color::GREEN: return tessera::CardColor::GREEN;
+    case Color::BLUE: return tessera::CardColor::BLUE;
+    case Color::PURPLE: return tessera::CardColor::PURPLE;
+    case Color::ACCENT: return tessera::CardColor::BLUE;
+    default: return tessera::CardColor::NONE;
+  }
+}
+
 // The states that count as "on": open, on, unlocked, home, wet, running and the like. Everything else is off, or a
 // value (a sensor's number) when it is not a state word at all.
 static bool is_on(const std::string &s) {
@@ -256,7 +271,7 @@ static void inside(lv_obj_t *circle, lv_obj_t *label, int w, int h, int dy = 0) 
 
 // One entity: its icon in a circle of its state's colour, its name, and its state in words (or its value with unit).
 // Square or tall, the circle above and the words under it; wide, the circle at the left and the words beside it. The
-// tile takes the colour lightly while the entity is on, when the tile says so.
+// whole card takes the colour while the entity is on, when the tile says so.
 class StatusTile : public tessera::Tile {
  public:
   explicit StatusTile(const tessera::Plugin *plugin) : plugin_(plugin) {}
@@ -283,17 +298,6 @@ class StatusTile : public tessera::Tile {
       default: name_font_ = Font::BODY; state_font_ = Font::TITLE; break;
     }
     tap_ = c.options["tap"] | false;
-
-    // The tint covers the whole tile, its padding too, with the tile's own corners. Floating: it never scrolls it.
-    const int pl = lv_obj_get_style_pad_left(c.parent, LV_PART_MAIN), pt = lv_obj_get_style_pad_top(c.parent, LV_PART_MAIN);
-    const int pr = lv_obj_get_style_pad_right(c.parent, LV_PART_MAIN);
-    const int pb = lv_obj_get_style_pad_bottom(c.parent, LV_PART_MAIN);
-    tint_ = ui::block(c.parent, theme::CARD);
-    lv_obj_add_flag(tint_, LV_OBJ_FLAG_FLOATING);
-    lv_obj_remove_flag(tint_, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_set_style_radius(tint_, lv_obj_get_style_radius(c.parent, LV_PART_MAIN), 0);
-    place(tint_, -pl, -pt, width_ + pl + pr, height_ + pt + pb);
-    lv_obj_set_style_bg_opa(tint_, LV_OPA_TRANSP, 0);
 
     // With neither the name nor the state, the icon alone stands in the middle of the tile.
     wide_ = width_ >= height_ * 3 / 2 && (show_name_ || show_state_);
@@ -399,7 +403,7 @@ class StatusTile : public tessera::Tile {
 
     if (!known) {
       // Nothing to show yet: the kind's off icon, grey, and why.
-      set_bg_opa(tint_, LV_OPA_TRANSP);
+      if (tint_on_) ui::set_card_color(tessera::CardColor::NONE);
       ui::set_fill(circle_, Tone::NORMAL, theme::TRACK);
       set_bg_opa(circle_, LV_OPA_60);
       ui::set_text(icon_, ui::icon(icon_for(k, false)));
@@ -421,9 +425,19 @@ class StatusTile : public tessera::Tile {
     const bool colored = color != Color::GREY;
     // A value counts as on for the tint: it is there.
     const bool lit = word ? on : true;
+    // The whole card, edge to edge, in the state's colour while it is on, when the tile says so (0.26). The parts on it
+    // then take the ink, which reads on every card colour, instead of the state's colour, which would vanish on its own
+    // card.
+    const bool full = tint_on_ && lit && colored;
+    if (tint_on_) ui::set_card_color(full ? card_of(color) : tessera::CardColor::NONE);
 
     // The circle lightly in the state's colour and the icon fully; grey, a plain circle.
-    if (colored) {
+    if (full) {
+      ui::set_fill(circle_, Tone::NORMAL, theme::INK);
+      set_bg_opa(circle_, LV_OPA_10);
+      ui::set_color(icon_, theme::INK);
+      if (show_name_) ui::set_color(name_, theme::SLATE);
+    } else if (colored) {
       paint(circle_, color, true);
       set_bg_opa(circle_, LV_OPA_20);
       paint(icon_, color, false);
@@ -433,14 +447,6 @@ class StatusTile : public tessera::Tile {
       ui::set_color(icon_, theme::MUTED);
     }
     ui::set_text(icon_, ui::icon(icon_for(k, on)));
-
-    // The whole tile tinted while it is on, when the tile says so.
-    if (tint_on_ && lit && colored) {
-      paint(tint_, color, true);
-      set_bg_opa(tint_, LV_OPA_10);
-    } else {
-      set_bg_opa(tint_, LV_OPA_TRANSP);
-    }
 
     if (!show_state_) return;
 
@@ -461,7 +467,8 @@ class StatusTile : public tessera::Tile {
     // A long word ("Geschlossen") steps down a size on a narrow tile rather than being cut.
     ui::set_font(state_, fitting(text.c_str(), text_room(), state_font_, Font::BODY_LARGE));
     ui::set_text(state_, text);
-    if (colored) paint(state_, color, false);
+    if (full) ui::set_color(state_, theme::INK);
+    else if (colored) paint(state_, color, false);
     else ui::set_color(state_, word ? theme::INK_SOFT : theme::INK);
   }
 
@@ -487,7 +494,7 @@ class StatusTile : public tessera::Tile {
   Font name_font_ = Font::BODY, state_font_ = Font::TITLE;
   char entity_[96]{}, tile_name_[48]{}, kind_id_[16]{}, on_text_[48]{}, off_text_[48]{};
   char state_text_[64]{}, name_text_[64]{}, device_class_[32]{}, unit_[16]{};
-  lv_obj_t *tint_{}, *circle_{}, *icon_{}, *name_{}, *state_{};
+  lv_obj_t *circle_{}, *icon_{}, *name_{}, *state_{};
 };
 
 void StatusTilePlugin::setup() {
