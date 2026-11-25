@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.3
+- "Tint the tile" fills the whole tile, edge to edge: the tint stopped at the card's padding and left an
+  uncoloured band around it. It now takes one of the screen's card colours (red, orange, yellow, green, blue, purple;
+  the accent takes blue), and the icon and the words take the ink on it, so they stay readable. Plugin API 0.26.
+
 ## 1.2.2
 - For a value or text, "Word when on" is now the name above it, such as "Diesel", and the value stays as it is. The
   `{state}` template of 1.2.0 is gone.
